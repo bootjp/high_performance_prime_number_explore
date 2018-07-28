@@ -2,16 +2,16 @@
 #include <math.h>
 
 int main() {
-    unsigned int n;
+    unsigned n;
     int count = 2;
     scanf("%d", &n);
     printf("1\t : 2\n");
-    for (unsigned int i = 3; i <= n; i += 2) {
+    for (unsigned i = 3; i <= n; i += 2) {
         int isPrime = 1;
         if (i % 2 == 0) {
             isPrime = 0;
         } else {
-            for (int j = 3; j*j <= i; j += 2) {
+            for (unsigned j = 3; j*j <= i; j += 2) {
                 if (i % j == 0) {
                     isPrime = 0;
                     break;
