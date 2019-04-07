@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"math"
+	"math/big"
 	"os"
 	"runtime"
 	"strconv"
@@ -44,10 +45,6 @@ func main() {
 }
 
 const (
-	//bufferSize  = 41000000000
-	//bufferLimit = 40999999990
-
-	//*/
 	bufferSize  = 200000000
 	bufferLimit = 199990000
 )
@@ -59,7 +56,9 @@ func prime(s *SafeNum, wg *sync.WaitGroup) {
 
 		for i := uint64(1); i != calcRange; i++ {
 			num += 1
-			if isPrime(num) {
+			i := big.NewInt(int64(num))
+			isPrime := i.ProbablyPrime(1)
+			if isPrime /*isPrime(num)*/ {
 				buf = append(append(buf, strconv.FormatUint(num, 10)...), '\n')
 
 				if len(buf) > bufferLimit {
@@ -70,14 +69,13 @@ func prime(s *SafeNum, wg *sync.WaitGroup) {
 					buf = make([]byte, 0, bufferSize)
 				}
 			}
-			//fmt.Println(i, num)
-
 		}
-
+	}
+	_, err := os.Stdout.Write(buf)
+	if err != nil {
+		log.Fatal(err)
 	}
 	wg.Done()
-	//os.Exit(0)
-	//wg.Done()
 }
 
 func isPrime(n uint64) bool {
