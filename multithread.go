@@ -44,8 +44,8 @@ func main() {
 }
 
 const (
-	bufferSize  = 200000000
-	bufferLimit = 199990000
+	bufferSize  = 20000000
+	bufferLimit = 19999000
 )
 
 func prime(s *SafeNum, wg *sync.WaitGroup) {
