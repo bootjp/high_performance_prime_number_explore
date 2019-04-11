@@ -51,22 +51,36 @@ const (
 func prime(s *SafeNum, wg *sync.WaitGroup) {
 
 	buf := make([]byte, 0, bufferSize)
+	m := &sync.Mutex{}
 	for num := s.Get(); num <= limit; num = s.Get() {
 
 		for i := uint64(1); i != calcRange; i++ {
 			num += 1
-			i := big.NewInt(int64(num))
 
 			// 多段チェックにすることで高速化している
-			if isPrime(num) && i.ProbablyPrime(0) {
-				buf = append(append(buf, strconv.FormatUint(num, 10)...), '\n')
+			if isPrime(num) {
+				go func(num uint64) {
+					if !big.NewInt(int64(num)).ProbablyPrime(0) {
+						return
+					}
+
+					m.Lock()
+					buf = append(append(buf, strconv.FormatUint(num, 10)...), '\n')
+
+					m.Unlock()
+
+				}(num)
+				m.Lock()
 				if len(buf) > bufferLimit {
+
 					_, err := os.Stdout.Write(buf)
 					if err != nil {
 						log.Fatal(err)
 					}
 					buf = make([]byte, 0, bufferSize)
+
 				}
+				m.Unlock()
 			}
 		}
 	}
