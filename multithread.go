@@ -44,13 +44,14 @@ func main() {
 }
 
 const (
-	bufferSize  = 200000000
-	bufferLimit = 199990000
+	bufferSize  = 20000000
+	bufferLimit = 19999000
 )
 
 func prime(s *SafeNum, wg *sync.WaitGroup) {
 
 	buf := make([]byte, 0, bufferSize)
+	m := &sync.Mutex{}
 	for num := s.Get(); num <= limit; num = s.Get() {
 
 		for i := uint64(1); i != calcRange; i++ {
@@ -59,12 +60,15 @@ func prime(s *SafeNum, wg *sync.WaitGroup) {
 			if isPrime(num) && big.NewInt(int64(num)).ProbablyPrime(0) {
 				buf = append(append(buf, strconv.FormatUint(num, 10)...), '\n')
 				if len(buf) > bufferLimit {
+
 					_, err := os.Stdout.Write(buf)
 					if err != nil {
 						log.Fatal(err)
 					}
 					buf = make([]byte, 0, bufferSize)
+
 				}
+				m.Unlock()
 			}
 		}
 	}
