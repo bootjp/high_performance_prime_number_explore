@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"math"
-	"math/big"
 	"os"
 	"runtime"
 	"strconv"
@@ -20,13 +19,15 @@ type SafeNum struct {
 	m sync.RWMutex
 }
 
+// 計算済みの数を共有する
 func (s *SafeNum) Get() uint64 {
 	s.m.Lock()
 	tmp := s.n
 
+	// 一つひとつの値でロックを取る必要はないのでざっくり分配する
 	s.n += calcRange
 
-	s.m.Unlock()
+	s.m.Unlock() // defer は呼び出しが遅いのでpanic やエラーが投げられないとき手動でやる
 	return tmp
 }
 
@@ -44,20 +45,19 @@ func main() {
 }
 
 const (
-	bufferSize  = 20000000
-	bufferLimit = 19999000
+	bufferSize  = 200000000
+	bufferLimit = 199999999
 )
 
 func prime(s *SafeNum, wg *sync.WaitGroup) {
 
 	buf := make([]byte, 0, bufferSize)
-	m := &sync.Mutex{}
 	for num := s.Get(); num <= limit; num = s.Get() {
 
 		for i := uint64(1); i != calcRange; i++ {
 			num += 1
 			// 多段チェックにすることで高速化している
-			if isPrime(num) && big.NewInt(int64(num)).ProbablyPrime(0) {
+			if isPrime(num) /*&& big.NewInt(int64(num)).ProbablyPrime(0) */ {
 				buf = append(append(buf, strconv.FormatUint(num, 10)...), '\n')
 				if len(buf) > bufferLimit {
 
@@ -68,7 +68,6 @@ func prime(s *SafeNum, wg *sync.WaitGroup) {
 					buf = make([]byte, 0, bufferSize)
 
 				}
-				m.Unlock()
 			}
 		}
 	}
@@ -79,6 +78,7 @@ func prime(s *SafeNum, wg *sync.WaitGroup) {
 	wg.Done()
 }
 
+// @see "https://rosettacode.org/wiki/Miller–Rabin_primality_test#Go"
 func isPrime(n uint64) bool {
 
 	// bases of 2, 7, 61 are sufficient to cover 2^32
